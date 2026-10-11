@@ -9,5 +9,7 @@ https://github.com/masshirodev/ranma/blob/main/doc/CONFIG.md (`ranma --dump-type
   same commit, and an option goes in the README's table.
 - Check it loads: `ranma --check-config` lists every plugin and why one failed;
   `ranma lua` runs code in the live server.
+  CI (`.github/workflows/ci.yml`) loads it into the latest ranma release on
+  every push and fails if it does not.
 - `AGENTS.local.md` (gitignored) carries what is true of one checkout on one
   machine. Never commit it.
