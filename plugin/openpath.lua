@@ -1,4 +1,4 @@
--- openpath: Ctrl+click a file path in a pane to open it.
+-- openpath: Ctrl+click a file path or a link in a pane to open it.
 --
 --   ctrl+click         a file opens in nvim in a new pane (at its line, for
 --                      `src/app.rs:120:5` as compilers print them); a
@@ -10,6 +10,13 @@
 -- A path is taken as the pane's shell would: relative to its directory, `~`
 -- for home. Text that is not an existing file or directory is left alone, so
 -- the click does nothing there. Alt+click works the same as Ctrl+click.
+--
+-- A link (a URL in the text, or an OSC 8 link whose text says something else,
+-- like a `PR #45` that points at the pull request) is taken first:
+--   ctrl+click         opens it with xdg-open; a file:// link is a path.
+--   ctrl+right-click   a list: open it, copy the address, copy the text.
+-- Opening happens where ranma runs, so from a terminal that came over SSH a
+-- ctrl+click copies the address instead and says so.
 --
 -- ranma's plugin API: https://github.com/masshirodev/ranma/blob/main/doc/CONFIG.md ("Hooks": click).
 --
@@ -122,6 +129,64 @@ local function copy_content(path)
   ranma.toast("copied " .. path:match("[^/]*$") .. " (" .. lines .. " lines)")
 end
 
+-- The link under the click, as ranma's hints find it, or nil.
+local function link_at(e)
+  local p = ranma.pane(e.pane)
+  return p and p:link_at(e.line, e.col)
+end
+
+-- A file:// link names a path on this machine (its host, if any, is this one).
+local function file_path(url)
+  local path = url:match("^file://[^/]*(/.*)$")
+  return path and path:gsub("%%(%x%x)", function(h) return string.char(tonumber(h, 16)) end)
+end
+
+local function copy_url(url)
+  ranma.copy(url)
+  ranma.toast("copied " .. url)
+end
+
+local function open_url(url)
+  if ranma.client().remote then
+    copy_url(url)
+    return ranma.toast("opening would happen on the server, not here: copied instead")
+  end
+  xdg(url)
+end
+
+local on_path
+
+local function on_link(e, l)
+  local path = file_path(l.url)
+  local k = path and kind(path)
+  if k then
+    on_path(e, path, k, nil)
+    return true
+  end
+  if e.button == "left" then
+    open_url(l.url)
+  elseif e.button == "right" then
+    local items = {
+      { label = "open with xdg-open", act = "open" },
+      { label = "copy the address", detail = l.url, act = "copy" },
+    }
+    local shown = l.text or ""
+    if shown ~= "" and shown ~= l.url then
+      items[#items + 1] = { label = "copy the text", detail = shown, act = "text" }
+    end
+    ranma.picker {
+      title = l.url,
+      items = items,
+      on_select = function(item)
+        if item.act == "open" then open_url(l.url)
+        elseif item.act == "copy" then copy_url(l.url)
+        elseif item.act == "text" then ranma.copy(shown) ranma.toast("copied " .. shown) end
+      end,
+    }
+  end
+  return true
+end
+
 local function target(e)
   local p = ranma.pane(e.pane)
   if not p then return nil end
@@ -135,9 +200,7 @@ local function target(e)
   return path, k, line
 end
 
-ranma.on("click", function(e)
-  local path, k, line = target(e)
-  if not path then return end
+function on_path(e, path, k, line)
   if e.button == "left" then
     if k == "dir" then
       open_dir(path)
@@ -171,4 +234,11 @@ ranma.on("click", function(e)
       end,
     }
   end
+end
+
+ranma.on("click", function(e)
+  local l = link_at(e)
+  if l and on_link(e, l) then return end
+  local path, k, line = target(e)
+  if path then on_path(e, path, k, line) end
 end)

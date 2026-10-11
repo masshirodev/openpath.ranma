@@ -1,6 +1,6 @@
 # openpath.ranma
 
-A plugin for [ranma](https://github.com/masshirodev/ranma), the terminal tiling window manager: ctrl+click a file path in a pane to open it.
+A plugin for [ranma](https://github.com/masshirodev/ranma), the terminal tiling window manager: ctrl+click a file path or a link in a pane to open it.
 
 ## Install
 
@@ -31,6 +31,13 @@ Needs: nvim and yazi (both options), `xdg-open`, and `wl-copy` (Wayland) for cop
 A path is taken as the pane's shell would: relative to its directory, `~`
 for home. Text that is not an existing file or directory is left alone, so
 the click does nothing there. Alt+click works the same as Ctrl+click.
+
+A link (a URL in the text, or an OSC 8 link whose text says something else,
+like a `PR #45` that points at the pull request) is taken first:
+  ctrl+click         opens it with xdg-open; a file:// link is a path.
+  ctrl+right-click   a list: open it, copy the address, copy the text.
+Opening happens where ranma runs, so from a terminal that came over SSH a
+ctrl+click copies the address instead and says so.
 
 ranma's plugin API: https://github.com/masshirodev/ranma/blob/main/doc/CONFIG.md ("Hooks": click).
 ```
