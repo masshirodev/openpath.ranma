@@ -25,9 +25,11 @@ Needs: nvim and yazi (both options), `xdg-open`, and `wl-copy` (Wayland) for cop
                      `src/app.rs:120:5` as compilers print them); a
                      directory in yazi; an image, a PDF or anything else
                      that is not text with xdg-open.
-  ctrl+right-click   a list: nvim, yazi on its folder, xdg-open, copy the
+  ctrl+right-click   a list: nvim, its folder in yazi or with xdg-open
+                     (the desktop's file manager), xdg-open, copy the
                      file's content (text as text, an image as an image you
                      can paste into a browser or a chat), copy the path.
+                     On a directory: yazi, xdg-open, copy the path.
 A path is taken as the pane's shell would: relative to its directory, `~`
 for home. Text that is not an existing file or directory is left alone, so
 the click does nothing there. Alt+click works the same as Ctrl+click.

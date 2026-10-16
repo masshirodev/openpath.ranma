@@ -4,9 +4,11 @@
 --                      `src/app.rs:120:5` as compilers print them); a
 --                      directory in yazi; an image, a PDF or anything else
 --                      that is not text with xdg-open.
---   ctrl+right-click   a list: nvim, yazi on its folder, xdg-open, copy the
+--   ctrl+right-click   a list: nvim, its folder in yazi or with xdg-open
+--                      (the desktop's file manager), xdg-open, copy the
 --                      file's content (text as text, an image as an image you
 --                      can paste into a browser or a chat), copy the path.
+--                      On a directory: yazi, xdg-open, copy the path.
 -- A path is taken as the pane's shell would: relative to its directory, `~`
 -- for home. Text that is not an existing file or directory is left alone, so
 -- the click does nothing there. Alt+click works the same as Ctrl+click.
@@ -211,16 +213,23 @@ function on_path(e, path, k, line)
     end
   elseif e.button == "right" then
     local dir = k == "dir" and path or path:match("^(.*)/[^/]*$") or path
-    local items = {
-      { label = "open in " .. ranma.get("openpath.editor"), act = "edit" },
-      { label = "open its folder in " .. ranma.get("openpath.files"), detail = dir, act = "dir" },
-      { label = "open with xdg-open", act = "xdg" },
-      { label = "copy content", detail = is_text(path) and "as text" or "as " .. ((path:match("%.(%w+)$") or "a file"):lower()) .. ", for pasting", act = "content" },
-      { label = "copy the path", detail = path, act = "copy" },
-    }
+    local files = ranma.get("openpath.files")
+    local items
     if k == "dir" then
-      table.remove(items, 4)
-      table.remove(items, 1)
+      items = {
+        { label = "open in " .. files, act = "dir" },
+        { label = "open with xdg-open", act = "xdg" },
+        { label = "copy the path", detail = path, act = "copy" },
+      }
+    else
+      items = {
+        { label = "open in " .. ranma.get("openpath.editor"), act = "edit" },
+        { label = "open its folder in " .. files, detail = dir, act = "dir" },
+        { label = "open its folder with xdg-open", detail = dir, act = "xdg-dir" },
+        { label = "open with xdg-open", act = "xdg" },
+        { label = "copy content", detail = is_text(path) and "as text" or "as " .. ((path:match("%.(%w+)$") or "a file"):lower()) .. ", for pasting", act = "content" },
+        { label = "copy the path", detail = path, act = "copy" },
+      }
     end
     ranma.picker {
       title = path,
@@ -229,6 +238,7 @@ function on_path(e, path, k, line)
         if item.act == "edit" then open_editor(path, line)
         elseif item.act == "dir" then open_dir(dir)
         elseif item.act == "xdg" then xdg(path)
+        elseif item.act == "xdg-dir" then xdg(dir)
         elseif item.act == "content" then copy_content(path)
         elseif item.act == "copy" then ranma.copy(path) end
       end,
