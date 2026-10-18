@@ -12,6 +12,8 @@
 -- A path is taken as the pane's shell would: relative to its directory, `~`
 -- for home. Text that is not an existing file or directory is left alone, so
 -- the click does nothing there. Alt+click works the same as Ctrl+click.
+-- The editor and the file manager open in a tiled pane, or in a float when
+-- `openpath.open_in` says so (`openpath.float_size` percent of the workspace).
 --
 -- A link (a URL in the text, or an OSC 8 link whose text says something else,
 -- like a `PR #45` that points at the pull request) is taken first:
@@ -30,6 +32,14 @@ ranma.option("openpath.editor", {
 ranma.option("openpath.files", {
   type = "string", default = "yazi",
   name = "File manager", desc = "What a directory opens in.",
+})
+ranma.option("openpath.open_in", {
+  type = "enum", choices = { "tile", "float" }, default = "tile",
+  name = "Open in", desc = "Whether the editor and the file manager open in a tiled pane or a floating one.",
+})
+ranma.option("openpath.float_size", {
+  type = "int", min = 10, max = 100, step = 5, default = 80,
+  name = "Float size", desc = "The float's width and height, in percent of the workspace, when opening in a float.",
 })
 
 local HOME = os.getenv("HOME") or ""
@@ -81,14 +91,23 @@ local function quote(s)
   return "'" .. s:gsub("'", "'\\''") .. "'"
 end
 
+-- exec focuses the pane it opens, and actions run in the order queued, so
+-- float_size lands on the new pane.
+local function open_pane(cmd)
+  ranma.action("exec " .. cmd)
+  if ranma.get("openpath.open_in") == "float" then
+    ranma.action("float_size " .. ranma.get("openpath.float_size"))
+  end
+end
+
 local function open_editor(path, line)
   local cmd = ranma.get("openpath.editor")
   if line then cmd = cmd .. " +" .. line end
-  ranma.action("exec " .. cmd .. " " .. quote(path))
+  open_pane(cmd .. " " .. quote(path))
 end
 
 local function open_dir(path)
-  ranma.action("exec " .. ranma.get("openpath.files") .. " " .. quote(path))
+  open_pane(ranma.get("openpath.files") .. " " .. quote(path))
 end
 
 local function xdg(path)

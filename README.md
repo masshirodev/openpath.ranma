@@ -33,6 +33,8 @@ Needs: nvim and yazi (both options), `xdg-open`, and `wl-copy` (Wayland) for cop
 A path is taken as the pane's shell would: relative to its directory, `~`
 for home. Text that is not an existing file or directory is left alone, so
 the click does nothing there. Alt+click works the same as Ctrl+click.
+The editor and the file manager open in a tiled pane, or in a float when
+`openpath.open_in` says so (`openpath.float_size` percent of the workspace).
 
 A link (a URL in the text, or an OSC 8 link whose text says something else,
 like a `PR #45` that points at the pull request) is taken first:
@@ -52,6 +54,8 @@ In ranma's settings panel under `openpath`, or with hako's `opts` (`{ "masshirod
 | --- | --- | --- |
 | `openpath.editor` | `"nvim"` | What a text file opens in; +LINE is passed when the path names a line. |
 | `openpath.files` | `"yazi"` | What a directory opens in. |
+| `openpath.open_in` | `"tile"` | Whether the editor and the file manager open in a tiled pane (`"tile"`) or a floating one (`"float"`). |
+| `openpath.float_size` | `80` | The float's width and height, in percent of the workspace (10 to 100), when opening in a float. |
 
 ## License
 
