@@ -13,7 +13,8 @@
 -- for home. Text that is not an existing file or directory is left alone, so
 -- the click does nothing there. Alt+click works the same as Ctrl+click.
 -- The editor and the file manager open in a tiled pane, or in a float when
--- `openpath.open_in` says so (`openpath.float_size` percent of the workspace).
+-- `openpath.open_in` says so (`openpath.float_size` percent of the workspace;
+-- needs a ranma with `ranma.open`, and an older one opens a tile).
 --
 -- A link (a URL in the text, or an OSC 8 link whose text says something else,
 -- like a `PR #45` that points at the pull request) is taken first:
@@ -91,12 +92,13 @@ local function quote(s)
   return "'" .. s:gsub("'", "'\\''") .. "'"
 end
 
--- exec focuses the pane it opens, and actions run in the order queued, so
--- float_size lands on the new pane.
+-- ranma.open puts a float straight into the floating layer, so the tiles
+-- are never split to make room for it. A ranma without it opens a tile.
 local function open_pane(cmd)
-  ranma.action("exec " .. cmd)
-  if ranma.get("openpath.open_in") == "float" then
-    ranma.action("float_size " .. ranma.get("openpath.float_size"))
+  if ranma.get("openpath.open_in") == "float" and ranma.has("open") then
+    ranma.open { command = cmd, float = ranma.get("openpath.float_size") }
+  else
+    ranma.action("exec " .. cmd)
   end
 end
 

@@ -34,7 +34,8 @@ A path is taken as the pane's shell would: relative to its directory, `~`
 for home. Text that is not an existing file or directory is left alone, so
 the click does nothing there. Alt+click works the same as Ctrl+click.
 The editor and the file manager open in a tiled pane, or in a float when
-`openpath.open_in` says so (`openpath.float_size` percent of the workspace).
+`openpath.open_in` says so (`openpath.float_size` percent of the workspace;
+needs a ranma with `ranma.open`, and an older one opens a tile).
 
 A link (a URL in the text, or an OSC 8 link whose text says something else,
 like a `PR #45` that points at the pull request) is taken first:
