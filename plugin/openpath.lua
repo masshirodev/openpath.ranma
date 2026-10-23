@@ -16,6 +16,12 @@
 -- `openpath.open_in` says so (`openpath.float_size` percent of the workspace;
 -- needs a ranma with `ranma.open`, and an older one opens a tile).
 --
+-- Over ssh, in a ranma with a ranma around it (the PC's, with this one on
+-- the VPS), a picture, a PDF, audio or video is fetched to the machine at
+-- the keyboard and opened there (`ranma.open_here`), since there is no screen
+-- here: ctrl+click, and "open on this desktop" in the list. Other kinds are
+-- not carried. Needs a ranma with `ranma.open_here` on both sides.
+--
 -- A link (a URL in the text, or an OSC 8 link whose text says something else,
 -- like a `PR #45` that points at the pull request) is taken first:
 --   ctrl+click         opens it with xdg-open; a file:// link is a path.
@@ -114,6 +120,18 @@ end
 
 local function xdg(path)
   ranma.spawn({ "xdg-open", path }, { timeout = 10 })
+end
+
+-- Whether the screen is on another machine, with a ranma there to open
+-- files for this one.
+local function far()
+  return ranma.has("open_here") and ranma.client().outer
+end
+
+-- A file opened with the desktop's opener: here, or on the machine at the
+-- keyboard when that is another one.
+local function open_file(path)
+  if far() then ranma.open_here(path) else xdg(path) end
 end
 
 -- Text goes through ranma.copy (OSC 52), which reaches this desktop's
@@ -230,7 +248,7 @@ function on_path(e, path, k, line)
     elseif is_text(path) then
       open_editor(path, line)
     else
-      xdg(path)
+      open_file(path)
     end
   elseif e.button == "right" then
     local dir = k == "dir" and path or path:match("^(.*)/[^/]*$") or path
@@ -247,7 +265,7 @@ function on_path(e, path, k, line)
         { label = "open in " .. ranma.get("openpath.editor"), act = "edit" },
         { label = "open its folder in " .. files, detail = dir, act = "dir" },
         { label = "open its folder with xdg-open", detail = dir, act = "xdg-dir" },
-        { label = "open with xdg-open", act = "xdg" },
+        { label = far() and "open on this desktop" or "open with xdg-open", act = "xdg" },
         { label = "copy content", detail = is_text(path) and "as text" or "as " .. ((path:match("%.(%w+)$") or "a file"):lower()) .. ", for pasting", act = "content" },
         { label = "copy the path", detail = path, act = "copy" },
       }
@@ -258,7 +276,8 @@ function on_path(e, path, k, line)
       on_select = function(item)
         if item.act == "edit" then open_editor(path, line)
         elseif item.act == "dir" then open_dir(dir)
-        elseif item.act == "xdg" then xdg(path)
+        elseif item.act == "xdg" then
+          if k == "dir" then xdg(path) else open_file(path) end
         elseif item.act == "xdg-dir" then xdg(dir)
         elseif item.act == "content" then copy_content(path)
         elseif item.act == "copy" then ranma.copy(path) end

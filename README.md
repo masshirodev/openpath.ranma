@@ -37,6 +37,12 @@ The editor and the file manager open in a tiled pane, or in a float when
 `openpath.open_in` says so (`openpath.float_size` percent of the workspace;
 needs a ranma with `ranma.open`, and an older one opens a tile).
 
+Over ssh, in a ranma with a ranma around it (the PC's, with this one on
+the VPS), a picture, a PDF, audio or video is fetched to the machine at
+the keyboard and opened there (`ranma.open_here`), since there is no screen
+here: ctrl+click, and "open on this desktop" in the list. Other kinds are
+not carried. Needs a ranma with `ranma.open_here` on both sides.
+
 A link (a URL in the text, or an OSC 8 link whose text says something else,
 like a `PR #45` that points at the pull request) is taken first:
   ctrl+click         opens it with xdg-open; a file:// link is a path.
