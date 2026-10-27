@@ -1,10 +1,15 @@
 # AGENTS.md
 
-openpath.ranma is a ranma plugin in Lua: `plugin/openpath.lua` is all of it, and
-its header comment is the reference that `README.md` repeats. ranma's API is
+openpath.ranma is a ranma plugin in Lua: `plugin/openpath.lua`, and its header
+comment is the reference that `README.md` repeats. `lua/openpath/winpath.lua`
+finds Windows paths under WSL; linkhover.ranma requires it too (its tooltip on
+a Windows path), so a change to what `at()` returns is a change to both.
+ranma's API is
 https://github.com/masshirodev/ranma/blob/main/doc/CONFIG.md (`ranma --dump-types` prints it as LuaLS annotations).
 
 - Push to `main`.
+- `lua5.4 test/winpath.lua` tests the finder against a stand-in WSL tree, so
+  it runs off WSL too; CI runs it. A case the finder gets wrong goes there.
 - A change to what it does changes the header comment and `README.md` in the
   same commit, and an option goes in the README's table.
 - Check it loads: `ranma --check-config` lists every plugin and why one failed;

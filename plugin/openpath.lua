@@ -22,6 +22,17 @@
 -- here: ctrl+click, and "open on this desktop" in the list. Other kinds are
 -- not carried. Needs a ranma with `ranma.open_here` on both sides.
 --
+-- Under WSL, a Windows path is the Linux path it names: `C:\Users\me\a.rs:12`
+-- (or `C:/...`, or `(12,5)` as MSVC prints a line) is `/mnt/c/Users/me/a.rs`,
+-- under WSL's automount root, and `\\wsl$\Distro\...` or
+-- `\\wsl.localhost\Distro\...` into this distro is `/...`. A name with spaces
+-- (`C:\Program Files\...`) is found whole. It opens as any path does, except
+-- that what is not text opens with Windows (explorer.exe), and the list adds
+-- "open with Windows" (on a file), "show in Explorer" or "open in Explorer",
+-- and "copy the Windows path" beside the Linux one. `openpath.windows_paths`
+-- turns it off; off WSL it does nothing. linkhover.ranma shows the Linux path
+-- in a tooltip.
+--
 -- A link (a URL in the text, or an OSC 8 link whose text says something else,
 -- like a `PR #45` that points at the pull request) is taken first:
 --   ctrl+click         opens it with xdg-open; a file:// link is a path.
@@ -48,6 +59,13 @@ ranma.option("openpath.float_size", {
   type = "int", min = 10, max = 100, step = 5, default = 80,
   name = "Float size", desc = "The float's width and height, in percent of the workspace, when opening in a float.",
 })
+ranma.option("openpath.windows_paths", {
+  type = "bool", default = true,
+  name = "Windows paths", desc = "Under WSL, take a Windows path (C:\\..., \\\\wsl$\\...) as the Linux path it names.",
+})
+
+-- This package's lua/ is on require's path once it is loaded.
+local W = require("openpath.winpath")
 
 local HOME = os.getenv("HOME") or ""
 
@@ -75,16 +93,7 @@ local function resolve(path, cwd)
   return (cwd or HOME) .. "/" .. path
 end
 
--- "dir", "file", or nil when nothing is there.
-local function kind(path)
-  local f = io.open(path, "r")
-  if not f then return nil end
-  local ok, _, code = f:read(0)
-  f:close()
-  -- Reading a directory fails with EISDIR (21).
-  if ok == nil and code == 21 then return "dir" end
-  return "file"
-end
+local kind = W.kind
 
 local NOT_TEXT = { png = true, jpg = true, jpeg = true, gif = true, webp = true, pdf = true,
   mp4 = true, mkv = true, webm = true, mp3 = true, flac = true, zip = true }
@@ -228,11 +237,19 @@ local function on_link(e, l)
   return true
 end
 
+-- The Windows path under the click, under WSL, or nil.
+local function windows_at(text, col)
+  if not (ranma.get("openpath.windows_paths") and W.wsl()) then return nil end
+  return W.at(text, col)
+end
+
 local function target(e)
   local p = ranma.pane(e.pane)
   if not p then return nil end
   local text = p:lines(e.line, e.line)[1]
   if not text then return nil end
+  local w = windows_at(text, e.col)
+  if w then return w.path, w.kind, w.line, w.win end
   local word, line = word_at(text, e.col)
   if not word or word == "" then return nil end
   local path = resolve(word, p:cwd())
@@ -241,12 +258,15 @@ local function target(e)
   return path, k, line
 end
 
-function on_path(e, path, k, line)
+-- `win` is the Windows path the text said, when it said one.
+function on_path(e, path, k, line, win)
   if e.button == "left" then
     if k == "dir" then
       open_dir(path)
     elseif is_text(path) then
       open_editor(path, line)
+    elseif win then
+      W.explorer({ W.backslashed(win) })
     else
       open_file(path)
     end
@@ -270,6 +290,21 @@ function on_path(e, path, k, line)
         { label = "copy the path", detail = path, act = "copy" },
       }
     end
+    if win then
+      local winned = W.backslashed(win)
+      -- Windows' own opener, before the copies: under WSL xdg-open is
+      -- often missing, and these are what work.
+      local opens = k == "dir"
+        and { { label = "open in Explorer", act = "win-open" } }
+        or {
+          { label = "open with Windows", detail = "its default program", act = "win-open" },
+          { label = "show in Explorer", act = "win-select" },
+        }
+      local at = #items
+      while at > 0 and (items[at].act == "copy" or items[at].act == "content") do at = at - 1 end
+      for i, it in ipairs(opens) do table.insert(items, at + i, it) end
+      items[#items + 1] = { label = "copy the Windows path", detail = winned, act = "copy-win" }
+    end
     ranma.picker {
       title = path,
       items = items,
@@ -280,7 +315,10 @@ function on_path(e, path, k, line)
           if k == "dir" then xdg(path) else open_file(path) end
         elseif item.act == "xdg-dir" then xdg(dir)
         elseif item.act == "content" then copy_content(path)
-        elseif item.act == "copy" then ranma.copy(path) end
+        elseif item.act == "copy" then ranma.copy(path)
+        elseif item.act == "win-open" then W.explorer({ W.backslashed(win) })
+        elseif item.act == "win-select" then W.explorer({ "/select," .. W.backslashed(win) })
+        elseif item.act == "copy-win" then ranma.copy(W.backslashed(win)) end
       end,
     }
   end
@@ -289,6 +327,6 @@ end
 ranma.on("click", function(e)
   local l = link_at(e)
   if l and on_link(e, l) then return end
-  local path, k, line = target(e)
-  if path then on_path(e, path, k, line) end
+  local path, k, line, win = target(e)
+  if path then on_path(e, path, k, line, win) end
 end)

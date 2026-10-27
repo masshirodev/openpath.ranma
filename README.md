@@ -16,7 +16,7 @@ Or by hand, as ranma loads any package under `pack/*/start/`:
 git clone https://github.com/masshirodev/openpath.ranma ~/.config/ranma/pack/plugins/start/openpath.ranma
 ```
 
-Needs: nvim and yazi (both options), `xdg-open`, and `wl-copy` (Wayland) for copying an image's content.
+Needs: nvim and yazi (both options), `xdg-open`, and `wl-copy` (Wayland) for copying an image's content. Under WSL, `explorer.exe` (Windows interop) for opening a Windows path with Windows.
 
 ## What it does
 
@@ -43,6 +43,17 @@ the keyboard and opened there (`ranma.open_here`), since there is no screen
 here: ctrl+click, and "open on this desktop" in the list. Other kinds are
 not carried. Needs a ranma with `ranma.open_here` on both sides.
 
+Under WSL, a Windows path is the Linux path it names: `C:\Users\me\a.rs:12`
+(or `C:/...`, or `(12,5)` as MSVC prints a line) is `/mnt/c/Users/me/a.rs`,
+under WSL's automount root, and `\\wsl$\Distro\...` or
+`\\wsl.localhost\Distro\...` into this distro is `/...`. A name with spaces
+(`C:\Program Files\...`) is found whole. It opens as any path does, except
+that what is not text opens with Windows (explorer.exe), and the list adds
+"open with Windows" (on a file), "show in Explorer" or "open in Explorer",
+and "copy the Windows path" beside the Linux one. `openpath.windows_paths`
+turns it off; off WSL it does nothing. linkhover.ranma shows the Linux path
+in a tooltip.
+
 A link (a URL in the text, or an OSC 8 link whose text says something else,
 like a `PR #45` that points at the pull request) is taken first:
   ctrl+click         opens it with xdg-open; a file:// link is a path.
@@ -63,6 +74,7 @@ In ranma's settings panel under `openpath`, or with hako's `opts` (`{ "masshirod
 | `openpath.files` | `"yazi"` | What a directory opens in. |
 | `openpath.open_in` | `"tile"` | Whether the editor and the file manager open in a tiled pane (`"tile"`) or a floating one (`"float"`). |
 | `openpath.float_size` | `80` | The float's width and height, in percent of the workspace (10 to 100), when opening in a float. |
+| `openpath.windows_paths` | `true` | Under WSL, take a Windows path (`C:\...`, `\\wsl$\...`) as the Linux path it names: ctrl+click opens it, and ctrl+right-click adds open with Windows, show in Explorer and copy the Windows path. Does nothing off WSL. |
 
 ## License
 
