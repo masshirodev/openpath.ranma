@@ -58,6 +58,8 @@ A link (a URL in the text, or an OSC 8 link whose text says something else,
 like a `PR #45` that points at the pull request) is taken first:
   ctrl+click         opens it with xdg-open; a file:// link is a path.
   ctrl+right-click   a list: open it, copy the address, copy the text.
+A file:// link to a path not on this machine says "not found here" (on
+ctrl+click, and as the list's title), since there is nothing to open.
 Opening happens where ranma runs, so from a terminal that came over SSH a
 ctrl+click copies the address instead and says so.
 

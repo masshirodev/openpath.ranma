@@ -37,6 +37,8 @@
 -- like a `PR #45` that points at the pull request) is taken first:
 --   ctrl+click         opens it with xdg-open; a file:// link is a path.
 --   ctrl+right-click   a list: open it, copy the address, copy the text.
+-- A file:// link to a path not on this machine says "not found here" (on
+-- ctrl+click, and as the list's title), since there is nothing to open.
 -- Opening happens where ranma runs, so from a terminal that came over SSH a
 -- ctrl+click copies the address instead and says so.
 --
@@ -213,8 +215,15 @@ local function on_link(e, l)
     on_path(e, path, k, nil)
     return true
   end
+  -- A file:// link to nothing on this machine: it may be on another one, or
+  -- gone, and xdg-open would fail without a word.
+  local missing
+  if path then
+    local shown = HOME ~= "" and path:gsub("^" .. HOME:gsub("%p", "%%%0") .. "/", "~/") or path
+    missing = "not found here: " .. shown
+  end
   if e.button == "left" then
-    open_url(l.url)
+    if missing then ranma.toast(missing) else open_url(l.url) end
   elseif e.button == "right" then
     local items = {
       { label = "open with xdg-open", act = "open" },
@@ -225,7 +234,7 @@ local function on_link(e, l)
       items[#items + 1] = { label = "copy the text", detail = shown, act = "text" }
     end
     ranma.picker {
-      title = l.url,
+      title = missing or l.url,
       items = items,
       on_select = function(item)
         if item.act == "open" then open_url(l.url)
