@@ -3,7 +3,8 @@
 # but packadd this checkout, and fails if it does not load. A failing plugin is
 # only a toast in a real config (ranma's CONFIG.md, "A failing plugin is
 # dropped whole"), so init.lua turns packadd's error into a failed check.
-# Beside it, test/winpath.lua tests the Windows path finder with plain Lua.
+# Beside it, test/winpath.lua and test/word.lua test the path finders with
+# plain Lua.
 name: ci
 
 on:
@@ -19,6 +20,8 @@ jobs:
       - run: sudo apt-get install -y lua5.4
       - name: The Windows path finder
         run: lua5.4 test/winpath.lua
+      - name: The path under a click
+        run: lua5.4 test/word.lua
   load:
     runs-on: ubuntu-latest
     steps:

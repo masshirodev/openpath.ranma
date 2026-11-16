@@ -10,8 +10,11 @@
 --                      can paste into a browser or a chat), copy the path.
 --                      On a directory: yazi, xdg-open, copy the path.
 -- A path is taken as the pane's shell would: relative to its directory, `~`
--- for home. Text that is not an existing file or directory is left alone, so
--- the click does nothing there. Alt+click works the same as Ctrl+click.
+-- for home. A name with spaces in it is found whole between backticks or
+-- quotes (`doc/HR Import.zip`, "My Notes.md"), or with its spaces escaped
+-- (`HR\ Import.zip`); unmarked, the click takes the word under it. Text
+-- that is not an existing file or directory is left alone, so the click
+-- does nothing there. Alt+click works the same as Ctrl+click.
 -- The editor and the file manager open in a tiled pane, or in a float when
 -- `openpath.open_in` says so (`openpath.float_size` percent of the workspace;
 -- needs a ranma with `ranma.open`, and an older one opens a tile).
@@ -68,32 +71,9 @@ ranma.option("openpath.windows_paths", {
 
 -- This package's lua/ is on require's path once it is loaded.
 local W = require("openpath.winpath")
+local Word = require("openpath.word")
 
 local HOME = os.getenv("HOME") or ""
-
--- Characters a path is made of, as a compiler or `ls` prints one.
-local PATHCHAR = "[%w%._%-/~+@,=]"
-
--- The path-like word around column `col` (0-based) of `text`, with a
--- `:line[:col]` after it split off.
-local function word_at(text, col)
-  local i = col + 1
-  local function part(c) return c:match(PATHCHAR) or c == ":" end
-  if i > #text or not part(text:sub(i, i)) then return nil end
-  local a, b = i, i
-  while a > 1 and part(text:sub(a - 1, a - 1)) do a = a - 1 end
-  while b < #text and part(text:sub(b + 1, b + 1)) do b = b + 1 end
-  local w = text:sub(a, b):gsub("^[:,]+", ""):gsub("[.,:;]+$", "")
-  local path, line = w:match("^(.-):(%d+):%d+$")
-  if not path then path, line = w:match("^(.-):(%d+)$") end
-  return path or w, line and tonumber(line)
-end
-
-local function resolve(path, cwd)
-  if path:sub(1, 2) == "~/" or path == "~" then return HOME .. path:sub(2) end
-  if path:sub(1, 1) == "/" then return path end
-  return (cwd or HOME) .. "/" .. path
-end
 
 local kind = W.kind
 
@@ -259,12 +239,7 @@ local function target(e)
   if not text then return nil end
   local w = windows_at(text, e.col)
   if w then return w.path, w.kind, w.line, w.win end
-  local word, line = word_at(text, e.col)
-  if not word or word == "" then return nil end
-  local path = resolve(word, p:cwd())
-  local k = kind(path)
-  if not k then return nil end
-  return path, k, line
+  return Word.at(text, e.col, { cwd = p:cwd(), home = HOME, kind = kind })
 end
 
 -- `win` is the Windows path the text said, when it said one.

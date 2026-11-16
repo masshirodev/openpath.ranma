@@ -31,7 +31,9 @@ Needs: nvim and yazi (both options), `xdg-open`, and `wl-copy` (Wayland) for cop
                      can paste into a browser or a chat), copy the path.
                      On a directory: yazi, xdg-open, copy the path.
 A path is taken as the pane's shell would: relative to its directory, `~`
-for home. Text that is not an existing file or directory is left alone, so
+for home. A name with spaces in it is found whole between backticks or
+quotes (`doc/HR Import.zip`, "My Notes.md"), or with its spaces escaped
+(`HR\ Import.zip`); unmarked, the click takes the word under it. Text that is not an existing file or directory is left alone, so
 the click does nothing there. Alt+click works the same as Ctrl+click.
 The editor and the file manager open in a tiled pane, or in a float when
 `openpath.open_in` says so (`openpath.float_size` percent of the workspace;

@@ -10,6 +10,9 @@ https://github.com/masshirodev/ranma/blob/main/doc/CONFIG.md (`ranma --dump-type
 - Push to `main`.
 - `lua5.4 test/winpath.lua` tests the finder against a stand-in WSL tree, so
   it runs off WSL too; CI runs it. A case the finder gets wrong goes there.
+- `lua/openpath/word.lua` finds the path under a click (a plain word, or a
+  name with spaces between backticks or quotes, or escaped);
+  `lua5.4 test/word.lua` tests it against a stand-in tree, and CI runs it.
 - A change to what it does changes the header comment and `README.md` in the
   same commit, and an option goes in the README's table.
 - Check it loads: `ranma --check-config` lists every plugin and why one failed;
